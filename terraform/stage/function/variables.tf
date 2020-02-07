@@ -3,37 +3,27 @@ variable "location" {
 }
 
 variable "tags" {
-    type = "map"
+    type = map
     default = {
         environment = "dev"
         source      = "terraform"
     }   
 }
 
-variable "vn_cidr" {
-    type = "list" 
-    default = ["10.0.0.0/16"]
-}
-
-
-variable "client_id" {}
-variable "client_secret" {}
-
-variable "ssh_public_key" {
-    default = "~/.ssh/id_rsa.pub"
-}
-
 variable resource_group_name {
-    default = "azure-functions"
+    type = string
+    description = "Resource group"
 }
 
 variable log_analytics_workspace_name {
+    type = string
+    description = "log analytics workpsace name"
     default = "testLogAnalyticsWorkspaceName"
 }
 
 # refer https://azure.microsoft.com/global-infrastructure/services/?products=monitor for log analytics available regions
 variable log_analytics_workspace_location {
-    default = "eastus"
+    default = "northeurope"
 }
 
 # refer https://azure.microsoft.com/pricing/details/monitor/ for log analytics pricing 

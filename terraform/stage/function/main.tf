@@ -1,5 +1,42 @@
+terraform {
+  backend "azurerm" {}
+}
+
+resource "random_id" "account" {
+  
+    # Generate a new id each time we switch to a new Azure Resource Group
+    keepers = {
+      # Generate a new ID only when a new resource group is defined
+      rg_id = var.resource_group_name
+    }
+    
+
+  byte_length = 8
+}
+
+
+resource "random_id" "function_name" {
+
+  keepers = {
+      # Generate a new ID only when a new resource group is defined
+      resource_group = var.resource_group_name
+    }
+
+  byte_length = 8
+}
+
+resource "azurerm_storage_account" "storage_account" {
+  name                     = random_id.account.hex
+  resource_group_name      = var.resource_group_name
+  location                 = var.location
+  account_tier             = "Standard"
+  account_replication_type = "LRS"
+
+}
+
+
 data "azurerm_storage_account_sas" "sas" {
-    connection_string = "${azurerm_storage_account.storage_account.primary_connection_string}"
+    connection_string = azurerm_storage_account.storage_account.primary_connection_string
     https_only = true
     start = "2019-01-01"
     expiry = "2021-12-31"
@@ -39,13 +76,13 @@ resource "azurerm_storage_blob" "appcode" {
     storage_account_name = azurerm_storage_account.storage_account.name
     storage_container_name = azurerm_storage_container.deployments.name
     type = "block"
-    source = "../MyFunctionProj/functionapp.zip"
+    source = "../../../MyFunctionProj/functionapp.zip"
 }
 
 resource "azurerm_app_service_plan" "plan" {
   name                = "azure-functions-service-plan"
-  location            = azurerm_resource_group.func_app.location
-  resource_group_name = azurerm_resource_group.func_app.name
+  location            = var.location
+  resource_group_name = var.resource_group_name
   kind                = "Linux"
   reserved            = true
 
@@ -57,16 +94,16 @@ resource "azurerm_app_service_plan" "plan" {
 
 resource "azurerm_application_insights" "application_insights" {
   name                = "application-insights"
-  location            = azurerm_resource_group.func_app.location
-  resource_group_name = azurerm_resource_group.func_app.name
+  location            = var.location
+  resource_group_name = var.resource_group_name
   application_type    = "Web"
 }
 
 
 resource "azurerm_function_app" "my_function" {
   name                      = "function-${random_id.function_name.hex}"
-  location                  = azurerm_resource_group.func_app.location
-  resource_group_name       = azurerm_resource_group.func_app.name
+  location                  = var.location
+  resource_group_name       = var.resource_group_name
   app_service_plan_id       = azurerm_app_service_plan.plan.id
   storage_connection_string = azurerm_storage_account.storage_account.primary_connection_string
   version = "~2"
@@ -77,8 +114,13 @@ resource "azurerm_function_app" "my_function" {
     https_only = true
     FUNCTIONS_WORKER_RUNTIME = "python"
     FUNCTION_APP_EDIT_MODE = "readonly"
-    HASH = "${base64encode(filesha256("../MyFunctionProj/functionapp.zip"))}"
+    HASH = "${base64encode(filesha256("../../../MyFunctionProj/functionapp.zip"))}"
     WEBSITE_RUN_FROM_PACKAGE = "https://${azurerm_storage_account.storage_account.name}.blob.core.windows.net/${azurerm_storage_container.deployments.name}/${azurerm_storage_blob.appcode.name}${data.azurerm_storage_account_sas.sas.sas}"
   }
-}
 
+  /*
+  provisioner "local-exec" {
+    command = "zip -r ../../../MyFunctionProj/functionapp.zip ../../../MyFunctionProj/*"
+  }
+  */
+}

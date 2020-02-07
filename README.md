@@ -1,4 +1,15 @@
-# Azure Functions Python developer guide
+# Azure Function With Python example
+
+This repository has a very simple example useful to create the required infrastructure to deploy a **python** function running in azure.
+It basically contains:
+* the terraform code
+* the python function code
+    *  configuration files.
+* the **docker** file to build an image to work with the **azure functions tools**. 
+
+
+
+## Developer guide
 
 - [Official documentation](https://docs.microsoft.com/en-us/azure/azure-functions/functions-reference-python)
 
