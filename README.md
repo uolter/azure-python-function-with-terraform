@@ -8,6 +8,12 @@ It basically contains:
 * the **docker** file to build an image to work with the **azure functions tools**. 
 
 
+## Requirements
+
+* terraform     v0.12.20 or grater
+* terragrunt    v0.21.11 or grater
+* docker        v18.09.9
+
 
 ## Developer guide
 
@@ -38,6 +44,63 @@ Once in the docker container:
 func host start
 ```
 ---
+
+
+## Azure Infrastructure Setup 
+
+Create a **Resource group** for the **storage account**
+
+```
+$ az group create \
+    --name storage-resource-group \
+    --location northeurope
+```
+
+Create the **Storage Account**
+
+```
+$ az storage account create \
+    --name terraformstate${RANDOM} \
+    --resource-group storage-resource-group \
+    --location northeurope \
+    --sku Standard_RAGRS \
+    --kind StorageV2
+$ # it creates the storage account terraformstate5844
+```
+
+[Create container blob](https://docs.microsoft.com/en-us/azure/storage/blobs/storage-quickstart-blobs-cli)
+
+```
+$ az storage account keys list \
+    --account-name terraformstate5844 \
+    --resource-group storage-resource-group \
+    --output table
+```
+ 
+get tue value of the key1 or key2 and set the following environment variable:
+
+```
+export AZURE_STORAGE_KEY="<key1 value>"
+```
+
+
+```
+$ az storage container create --name tfstate
+```
+
+## Infrastructure
+
+
+
+## Useful commands:
+
+List of locations
+
+```
+az account list-locations \
+    --query "[].{Region:name}" \
+    --out table
+```
 
 
 
